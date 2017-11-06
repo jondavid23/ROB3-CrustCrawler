@@ -27,7 +27,7 @@ SoftwareSerial mySerial( 10 , 11 );    // RX, TX
 
 // Input is X, Y, Z
 
-double invKin(double X, double Y, double Z){
+void invKin(double X, double Y, double Z){
   double base = 17.66;
   double link1 = 21.98;
   double link2 = 26.428;
@@ -44,28 +44,28 @@ double invKin(double X, double Y, double Z){
   // The square root thing
   double S = sqrt((pow(X, 2)+pow(Y, 2)+pow((Z-base), 2)));
   // Deriving the second ange through q1 and q2
-  double q1 = (pi/2)-acos(C/S);
+  double q1 = (PI/2)-acos(C/S);
   double q2 = acos((pow(link1, 2)-pow(link2, 2)+pow(S, 2)));
   // Deriving the third angle
   double q3 = acos((pow(link2, 2)+pow(link1, 2)-pow(S, 2)));
   // Deriving the first angle
-  double theta1 = atan2(Y, X)
+  double theta1 = atan2(Y, X);
   // Deriving the second angle
   double theta2 = q1+q2;
   // Deriving the third angle
-  double theta3 = q3-pi;
+  double theta3 = q3-PI;
 
   // Find the angles in degrees
-  double ang1 = (theta1*180)/pi+90;
-  double ang2 = (theta2*180)/pi+90;
-  double ang3 = (theta3*180)/pi+90;
+  double ang1 = (theta1*180)/PI+90;
+  double ang2 = (theta2*180)/PI+90;
+  double ang3 = (theta3*180)/PI+90;
 
   double pos[3];
   pos[0] = map(ang1, 0, 360, 0, 4095);
   pos[1] = map(ang2, 0, 360, 0, 4095);
   pos[2] = map(ang3, 0, 360, 0, 4095);
 
-  return(pos);
+  // return(&pos);
 }
 
 
@@ -88,7 +88,7 @@ void emg_move_pos(const std_msgs::UInt16MultiArray& emg){
 // was a lot of cross talk, the jooints were not easilly controlled
 void moveEmg(){
   // Move right EMG 2
-
+    int emg_array[8];
   // EMG 2 is right (+) and EMG 6 is left (-)
     int emgDiff1 = emg_array[2]-emg_array[6];
     int currPos1 = getpos(1);
@@ -216,6 +216,7 @@ void pendulum(int goal1, int goal2, int goal3, int goal4, int goal5){
     Serial.println(avg2);
     move(target_1[0],target_1[1],target_1[2],target_1[3],target_1[4]);
     if (getpos(1) == current_pos[0] && getpos(2) == current_pos[1] && getpos(3)){
+      // TODO: This if statement is very unfinished
       loop = 0;
     }
   }
