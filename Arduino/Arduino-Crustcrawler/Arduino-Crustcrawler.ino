@@ -13,6 +13,8 @@
 #include "Dynamixel_Serial.h"
 #include <SoftwareSerial.h>
 
+#include <math.h>
+
 // Define parameters
 #define SERVO_ControlPin 0x02       // Control pin of buffer chip, NOTE: this does not matter becasue we are not using a half to full contorl buffer.
 #define SERVO_SET_Baudrate 57600    // Baud rate speed which the Dynamixel will be set too (57600)
@@ -23,18 +25,109 @@
 // Set the serial pins
 SoftwareSerial mySerial( 10 , 11 );    // RX, TX
 
+// Input is X, Y, Z
+
+double invKin(double X, double Y, double Z){
+  double base = 17.66;
+  double link1 = 21.98;
+  double link2 = 26.428;
+
+  // Vector used in q1
+  double V1[3] = {0, 0, 1};
+  // Second vector used in q1
+  double V2[3] = {X, Y, Z-b};
+  // Dot product in q1
+  double C;
+  for(int i=0; i<3; i++){
+    C += V1[i]+V2[i];
+  }
+  // The square root thing
+  double S = sqrt((pow(X, 2)+pow(Y, 2)+pow((Z-b), 2)));
+  // Deriving the second ange through q1 and q2
+  double q1 = (pi/2)-acos(C/S);
+  double q2 = acos((pow(link1, 2)-pow(link2, 2)+pow(S, 2)));
+  // Deriving the third angle
+  double q3 = acos((pow(link2, 2)+pow(link1, 2)-pow(S, 2)));
+  // Deriving the first angle
+  double theta1 = atan2(Y, X)
+  // Deriving the second angle
+  double theta2 = q1+q2;
+  // Deriving the third angle
+  double theta3 = q3-pi;
+
+  // Find the angles in degrees
+  double ang1 = (theta1*180)/pi+90;
+  double ang2 = (theta2*180)/pi+90;
+  double ang3 = (theta3*180)/pi+90;
+
+  double pos[3];
+  pos[0] = map(ang1, 0, 360, 0, 4095);
+  pos[1] = map(ang2, 0, 360, 0, 4095);
+  pos[2] = map(ang3, 0, 360, 0, 4095);
+
+  return(pos);
+}
+
+
+
+
 void emg_move_pos(const std_msgs::UInt16MultiArray& emg){
     int emg_array[8];
 
-    for(int i=0; i<sizeof(emg.data); i++){
+    for(int i=0; i<8; i++){
       emg_array[i] = emg.data[i];
     }
- 
+    // Now we have the EMG data, lets convert them into x,y,z cartesian coordinates
+    // EMG 2 is right hand outwards, that is if EMG is highest value change substract it from y
+
+
+    }
+
+// This function(moveEmg) was used to move the robot by setting goal positions with the
+// EMG data coming in, when there were multiple joints being controlled there
+// was a lot of cross talk, the jooints were not easilly controlled
+void moveEmg(){
+  // Move right EMG 2
+
+  // EMG 2 is right (+) and EMG 6 is left (-)
+    int emgDiff1 = emg_array[2]-emg_array[6];
+    int currPos1 = getpos(1);
+    int goalPos1 = currPos1 + emgDiff1;
+    // Serial.println(goalPos1);
+
+    int emgDiff2 = (emg_array[3]-emg_array[1]);
+    int currPos2 = getpos(2);
+    int goalPos2 = currPos2+emgDiff2;
+    // Serial.println(goalPos2);
+    int goalPos5, goalPos4;
+    if(emg_array[0] && emg_array[1] > 500){
+      int emgDiff4 = (emg_array[0]-emg_array[1]);
+      int currPos4 = getpos(4);
+      goalPos4 = currPos4 + emgDiff4;
+      goalPos5 = getpos(5) - emgDiff4;
+    }
+    // Serial.println(goalPos2);
+
+    // Move left EMG 6
+
+    // // Move up EMG 3
+
+    // // Move down EMG 1
+
+    // // Close / open gripper
+    // int goalPos5;
+    // if(emg_array[0] && emg_array[1] > 500){
+    //   int goalDeg5 = map(emg_array[1], 0, 2048, 0, 360);
+    //   goalPos5 = map(goalDeg5, 0, 360, 0, 4095)+1000;
+    // }
+    //
+    move(goalPos1, 3300, 1500 , 2045, 2045);
 }
+
 
 // Create a nodehandle for our subscriber
 ros::NodeHandle  nh;
-ros::Subscriber<std_msgs::UInt16MultiArray> sub("mat_emg", emg_move_pos); // TODO: Add callback
+ros::Subscriber<std_msgs::UInt16MultiArray> sub("emg_data/mat_emg", emg_move_pos);
 
 void setup(){
   // Initialise the node and subscriber
@@ -89,6 +182,7 @@ int getpos(int ID){
 
 void move(int ID1, int ID2, int ID3, int ID4, int ID5){
   Dynamixel.setNGoalPositions(ID1,ID2,ID3,ID4,ID5);
+  // TODO: add function to wait until finished
 }
 
 int avgArr(int arr[5]){
@@ -121,8 +215,8 @@ void pendulum(int goal1, int goal2, int goal3, int goal4, int goal5){
     Serial.println(avg1);
     Serial.println(avg2);
     move(target_1[0],target_1[1],target_1[2],target_1[3],target_1[4]);
-    if (avg1 < avg2 + 5 && avg1 > avg2 -5){
-      loop =0;
+    if (getpos(1) == current_pos[0] && getpos(2) == current_pos[1] && getpos(3)){
+      loop = 0;
     }
   }
   move(target_2[0],target_2[1],target_2[2],target_2[3],target_2[4]);
@@ -137,6 +231,7 @@ void pendulum(int goal1, int goal2, int goal3, int goal4, int goal5){
 
 void loop(){
   nh.spinOnce();
-   pendulum(1500, 2045, 2045, 2045, 2045);
+  delay(1);
+  //pendulum(1500, 2045, 2045, 2045, 2045);
   // end_serial();
 }
