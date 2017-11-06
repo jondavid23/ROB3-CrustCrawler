@@ -35,14 +35,14 @@ double invKin(double X, double Y, double Z){
   // Vector used in q1
   double V1[3] = {0, 0, 1};
   // Second vector used in q1
-  double V2[3] = {X, Y, Z-b};
+  double V2[3] = {X, Y, Z-base};
   // Dot product in q1
   double C;
   for(int i=0; i<3; i++){
     C += V1[i]+V2[i];
   }
   // The square root thing
-  double S = sqrt((pow(X, 2)+pow(Y, 2)+pow((Z-b), 2)));
+  double S = sqrt((pow(X, 2)+pow(Y, 2)+pow((Z-base), 2)));
   // Deriving the second ange through q1 and q2
   double q1 = (pi/2)-acos(C/S);
   double q2 = acos((pow(link1, 2)-pow(link2, 2)+pow(S, 2)));
