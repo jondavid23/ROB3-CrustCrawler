@@ -1,6 +1,6 @@
 /*
-    This code is being developed to control a CrustCrawler manipulator with predetermined exercises. 
-	The speed of the movement for the CrustCrawler will depend on the sEMG signals received from the 
+    This code is being developed to control a CrustCrawler manipulator with predetermined exercises.
+	The speed of the movement for the CrustCrawler will depend on the sEMG signals received from the
 	MYO Armband. A current controlled system will be used to determind the speed.
 */
 /*********************
@@ -61,23 +61,31 @@ double x = 48.4, y = 0, z = 17.7; 	//Setting up the cartesian coordinates for in
 double _x,_y,_z;
 int emg_array[8];
 
-/*______________Serial Pins______________*/ 
+/*______________Serial Pins______________*/
 IRrecv irrecv(receiver);
 decode_results results;
 SoftwareSerial mySerial( 10 , 11 );    // RX, TX
 
-/*______________Functions______________*/ 
+/*______________Functions______________*/
 void serial_setup(int BAUD){
 
 }
 
-void set_profVel(int ID){ 
+void set_goalCurr(int ID){
+  Dynamixel.setGoalCurrent(0x01, ID);
+  Dynamixel.setGoalCurrent(0x02, ID);
+  Dynamixel.setGoalCurrent(0x03, ID);
+  Dynamixel.setGoalCurrent(0x04, ID);
+  Dynamixel.setGoalCurrent(0x05, ID);
+}
+
+void set_profVel(int ID){
   Dynamixel.setProfileVelocity(0x01, ID);  //Set the Profile Velocity for each servo. (max. is 1023)
   Dynamixel.setProfileVelocity(0x02, ID);  //Set the Profile Velocity for each servo. (max. is 1023)
   Dynamixel.setProfileVelocity(0x03, ID);  //Set the Profile Velocity for each servo. (max. is 1023)
 }
 
-void set_profAcc(int ID){ 
+void set_profAcc(int ID){
   Dynamixel.setProfileAcceleration(0x01, ID);  //Set the Profile Acceleration for each servo. (max. is 32767)
   Dynamixel.setProfileAcceleration(0x02, ID);  //Set the Profile Acceleration for each servo. (max. is 32767)
   Dynamixel.setProfileAcceleration(0x03, ID);  //Set the Profile Acceleration for each servo. (max. is 32767)
@@ -128,7 +136,7 @@ void move(int arr[]){
 
 boolean positionCompare(int arr[],int brr[]){
   int a = 0 ;
-  for(int i = 0 ; i < 5; i++){	
+  for(int i = 0 ; i < 5; i++){
 	if(arr[i]+100 > brr[i] && arr[i]-100 <brr[i]){
 	  a = 1+a;
 	}
@@ -147,7 +155,7 @@ boolean positionCompare(int arr[],int brr[]){
   else{
     return true ;
   }
-} 
+}
 
 void pendulum(int arr[]){
   arr[1] = (-(arr[1])+90);
@@ -178,13 +186,13 @@ void inverse_kine(double x, double y, double z){
   double q2 = acos((pow(L1,2)-pow(L2,2)+pow(H,2))/(2*L1*H));
   double q3 = acos((pow(L2,2)+pow(L1,2)-pow(H,2))/(2*L1*L2));
 
-  //Deriving the first angle 
+  //Deriving the first angle
   double theta1 = atan2(y, x);
   // Deriving the second angle
   double theta2 = q1+q2;
   // Deriving the third angle
   double theta3 = q3 - PI;
-  
+
   int ang1 = (int)(theta1*180)/PI;
   int ang2 = (int)(theta2*180)/PI;
   int ang3 = (int)(theta3*180)/PI;
@@ -196,12 +204,12 @@ void inverse_kine(double x, double y, double z){
   Serial.print(" q3. "); Serial.print(q3);
   Serial.print(" pi. "); Serial.println(PI,7);
   #endif MYDEBUG
-  
+
   Serial.print("Angles: ");
   Serial.print(" 1. "); Serial.print(ang1);
   Serial.print(" 2. "); Serial.print(ang2);
   Serial.print(" 3. "); Serial.println(ang3);
-  
+
   int positionS[5] = {ang1,ang2,ang3,0,0};
   pendulum(positionS);
 
@@ -210,9 +218,9 @@ void inverse_kine(double x, double y, double z){
 int translateIR(){ // takes action based on IR code received
   Serial.print("You pressed: ");
   switch(results.value){
-  case 0xFFA25D: Serial.println("POWER");  button_pressed = POWER; 
+  case 0xFFA25D: Serial.println("POWER");  button_pressed = POWER;
   power = !power;
-  if(power == false){ 
+  if(power == false){
     end_serial();
   }
   else if(power == true){
@@ -220,88 +228,90 @@ int translateIR(){ // takes action based on IR code received
     begin_serial(10,10);
   }
   break;
-  case 0xFF629D: Serial.println("VOL+"); button_pressed = VOLP; 
+  case 0xFF629D: Serial.println("VOL+"); button_pressed = VOLP;
   x += 5;
   break;
-  case 0xFFE21D: Serial.println("FUNC/STOP"); button_pressed = FUNC; 
+  case 0xFFE21D: Serial.println("FUNC/STOP"); button_pressed = FUNC;
   x = 48.4, y = 0, z = 17.7;
   break;
-  case 0xFF22DD: Serial.println("LEFT"); button_pressed = LEFT;  
+  case 0xFF22DD: Serial.println("LEFT"); button_pressed = LEFT;
   y += 5;
   break;
-  case 0xFF02FD: Serial.println("PLAY/PAUSE"); button_pressed = PLAY; 
+  case 0xFF02FD: Serial.println("PLAY/PAUSE"); button_pressed = PLAY;
   Serial.println("Current Selected Position:");
-  Serial.print("x = "); Serial.print(x); Serial.print(", "); Serial.print("y = "); Serial.print(y); Serial.print(", "); Serial.print("z = "); Serial.println(z); 
+  Serial.print("x = "); Serial.print(x); Serial.print(", "); Serial.print("y = "); Serial.print(y); Serial.print(", "); Serial.print("z = "); Serial.println(z);
   inverse_kine(x,y,z);
   break;
-  case 0xFFC23D: Serial.println("RIGHT"); button_pressed = RIGHT; 
+  case 0xFFC23D: Serial.println("RIGHT"); button_pressed = RIGHT;
   y -= 5;
   break;
-  case 0xFFE01F: Serial.println("DOWN"); button_pressed = DOWN; 
+  case 0xFFE01F: Serial.println("DOWN"); button_pressed = DOWN;
   z -= 5;
   break;
-  case 0xFFA857: Serial.println("VOL-"); button_pressed = VOLM; 
+  case 0xFFA857: Serial.println("VOL-"); button_pressed = VOLM;
   x -= 5;
   break;
-  case 0xFF906F: Serial.println("UP"); button_pressed = UP; 
+  case 0xFF906F: Serial.println("UP"); button_pressed = UP;
   z += 5;
   break;
-  case 0xFF6897: Serial.println("0"); button_pressed = ZERO; 
-  
+  case 0xFF6897: Serial.println("0"); button_pressed = ZERO;
+
   break;
-  case 0xFF9867: Serial.println("EQ"); button_pressed = EQ; 
-  
+  case 0xFF9867: Serial.println("EQ"); button_pressed = EQ;
+
   break;
-  case 0xFFB04F: Serial.println("REPEAT"); button_pressed = REPEAT; 
-  
+  case 0xFFB04F: Serial.println("REPEAT"); button_pressed = REPEAT;
+
   break;
-  case 0xFF30CF: Serial.println("1"); button_pressed = ONE; 
-  Serial.println("Exercise 1. have been selected."); 
+  case 0xFF30CF: Serial.println("1"); button_pressed = ONE;
+  Serial.println("Exercise 1. have been selected.");
   Serial.print("Please move your arm into a position that mirrors the arm of the CrustCrawler.");
   Serial.print("");
   break;
-  case 0xFF18E7: Serial.println("2"); button_pressed = TWO; 
-  
+  case 0xFF18E7: Serial.println("2"); button_pressed = TWO;
+
   break;
-  case 0xFF7A85: Serial.println("3"); button_pressed = THREE; 
-  
+  case 0xFF7A85: Serial.println("3"); button_pressed = THREE;
+
   break;
-  case 0xFF10EF: Serial.println("4"); button_pressed = FOUR; 
-  
+  case 0xFF10EF: Serial.println("4"); button_pressed = FOUR;
+
   break;
-  case 0xFF38C7: Serial.println("5"); button_pressed = FIVE; 
-  
+  case 0xFF38C7: Serial.println("5"); button_pressed = FIVE;
+
   break;
-  case 0xFF5AA5: Serial.println("6"); button_pressed = SIX; 
-  
+  case 0xFF5AA5: Serial.println("6"); button_pressed = SIX;
+
   break;
-  case 0xFF42BD: Serial.println("7"); button_pressed = SEVEN; 
-  
+  case 0xFF42BD: Serial.println("7"); button_pressed = SEVEN;
+
   break;
-  case 0xFF4AB5: Serial.println("8"); button_pressed = EIGHT; 
-  
+  case 0xFF4AB5: Serial.println("8"); button_pressed = EIGHT;
+
   break;
-  case 0xFF52AD: Serial.println("9"); button_pressed = NINE; 
-  
+  case 0xFF52AD: Serial.println("9"); button_pressed = NINE;
+
   break;
   case 0xFFFFFFFF: Serial.println("SAME AS BEFORE");
-  
-  break;  
+
+  break;
   }// End Case
   Serial.println("Awaiting new order...");
   return button_pressed;
-} 
-  
+}
+
 void Callback(const std_msgs::UInt16MultiArray& emg){
     for(int i=0; i<8; i++){
       emg_array[i] = emg.data[i];
     }
+    int appCurr = map(emg_array[1], 0, 2048, 0, 2047);
+    set_goalCurr(appCurr);
 }
-/*______________Initiate ROS NodeHandler and Subscriber______________*/ 
+/*______________Initiate ROS NodeHandler and Subscriber______________*/
 ros::NodeHandle nh;
 ros::Subscriber<std_msgs::UInt16MultiArray> sub("emg_data/mat_emg", Callback);
 
-/*______________Setup______________*/ 
+/*______________Setup______________*/
 void setup(){
   nh.initNode();
   nh.subscribe(sub);
@@ -309,16 +319,16 @@ void setup(){
   irrecv.enableIRIn();
   begin_serial(10,10);
 }
-/*______________Loop______________*/ 
+/*______________Loop______________*/
 void loop(){
   nh.spinOnce();
-  
+
   if (irrecv.decode(&results)){ // have we received an IR signal?
 	//Serial.println(results.value, HEX);
     int myVal = translateIR();
-	//Serial.println(myVal);	
+	//Serial.println(myVal);
     irrecv.resume(); // receive the next value
   }
-  
+
   delay(500); // Do not get immediate repeat
 }
