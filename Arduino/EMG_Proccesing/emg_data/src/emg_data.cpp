@@ -67,19 +67,19 @@ public:
     //std::cout << "]" << std::endl;
     threshold = avgArr(arrEmg);
     //std::cout << threshold << std::endl;
-    if (threshold>0 && threshold <= 50)
+    if (threshold < 50)
     {
       velocity = 0;
     }
-    else if (threshold>5 && threshold <= 100)
+    else if (threshold < 100)
     {
-      velocity = 1;
+      velocity = 9;
     }
-    else if (threshold>100 && threshold <= 500)
+    else if (threshold < 500)
     {
-      velocity = 2;
+      velocity = 6;
     }
-    else if (threshold>500)
+    else if (500 < threshold)
     {
       velocity = 3;
     }
