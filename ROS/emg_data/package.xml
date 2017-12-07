@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>emg_data</name>
+  <version>0.1.6</version>
+  <description>
+    This package provides subscribers that gather data from the raw_myo node in the ros framework. This data is then proccesed and can be used by the CrustCrawler  </description>
+  <license>Apache License 2.0</license>
+  <author email="oeth16@student.aau.dk">Oliver Hansen</author>
+  <maintainer email="oeth16@student.aau.dk">Oliver Hansen</maintainer>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>ros_myo</build_depend>
+  <run_depend>std_msgs</run_depend>
+  <export></export>
+</package>
